@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ config.title }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <h1 class="h3 mb-0">{{ config.title }}</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="{% url 'dashboard:reference_create' kind %}"><i class="bi bi-plus-lg"></i> Создать</a>
+        <a class="btn btn-outline-secondary" href="{% url 'dashboard:home' %}"><i class="bi bi-arrow-left"></i> Панель</a>
+    </div>
+</div>
+
+<div class="content-panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+            <tr>
+                {% if kind == 'categories' %}
+                    <th>Название</th><th>Описание</th>
+                {% elif kind == 'tags' %}
+                    <th>Название</th>
+                {% elif kind == 'organizations' %}
+                    <th>Название</th><th>Тип</th><th>Описание</th>
+                {% else %}
+                    <th>Название</th><th>Корпус</th><th>Аудитория</th><th>Адрес</th>
+                {% endif %}
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in objects %}
+                <tr>
+                    {% if kind == 'categories' %}
+                        <td>{{ item.name }}</td><td>{{ item.description|default:'-' }}</td>
+                    {% elif kind == 'tags' %}
+                        <td>{{ item.name }}</td>
+                    {% elif kind == 'organizations' %}
+                        <td>{{ item.name }}</td><td>{{ item.get_type_display }}</td><td>{{ item.description|default:'-' }}</td>
+                    {% else %}
+                        <td>{{ item.name }}</td><td>{{ item.building|default:'-' }}</td><td>{{ item.room|default:'-' }}</td><td>{{ item.address|default:'-' }}</td>
+                    {% endif %}
+                    <td class="text-end">
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'dashboard:reference_update' kind item.pk %}"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'dashboard:reference_delete' kind item.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="5" class="text-muted">Записей пока нет.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

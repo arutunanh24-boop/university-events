@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Личный кабинет{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Личный кабинет</h1>
+        <p class="text-muted mb-0">{{ user.get_role_display }} · {{ user.organization|default:'Организация не указана' }}</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{% url 'events:notifications' %}"><i class="bi bi-bell"></i> Непрочитанные: {{ unread_notifications }}</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="content-panel">
+            <h2 class="h5 mb-3">Профиль</h2>
+            <form method="post" class="row g-3">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="{% if field.name == 'email' or field.name == 'organization' %}col-12{% else %}col-md-6{% endif %}">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                    </div>
+                {% endfor %}
+                <div class="col-12">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg"></i> Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-panel">
+            <h2 class="h5 mb-3">Последние регистрации</h2>
+            {% for registration in registrations %}
+                <div class="profile-registration">
+                    <a href="{% url 'events:event_detail' registration.event.pk %}">{{ registration.event.title }}</a>
+                    <span class="small text-muted">{{ registration.event.start_datetime|date:'d.m.Y H:i' }} · {{ registration.get_status_display }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">Регистраций пока нет.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

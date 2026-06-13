@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ event.title }}{% endblock %}
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-8">
+        {% if event.image %}
+            <img class="detail-image mb-3" src="{{ event.image.url }}" alt="{{ event.title }}">
+        {% else %}
+            <img class="detail-image mb-3" src="{% static 'img/event-placeholder.png' %}" alt="">
+        {% endif %}
+
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+            <div>
+                <span class="badge text-bg-info mb-2">{{ event.category.name }}</span>
+                <h1 class="h2 mb-2">{{ event.title }}</h1>
+                <p class="text-muted mb-0">{{ event.organization.name }} · {{ event.organizer.full_name }}</p>
+            </div>
+            <span class="badge status-{{ event.status }} fs-6">{{ event.get_status_display }}</span>
+        </div>
+
+        <p class="lead">{{ event.description }}</p>
+
+        <div class="info-grid mb-4">
+            <div><span>Начало</span><strong>{{ event.start_datetime|date:'d.m.Y H:i' }}</strong></div>
+            <div><span>Окончание</span><strong>{{ event.end_datetime|date:'d.m.Y H:i' }}</strong></div>
+            <div><span>Место</span><strong>{{ event.location }}</strong></div>
+            <div><span>Участники</span><strong>{{ registered_count }}/{{ event.max_participants }}</strong></div>
+        </div>
+
+        <div class="tag-row mb-4">
+            {% for tag in event.tags.all %}
+                <span class="tag-chip">#{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+
+        <section class="content-panel mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">Материалы мероприятия</h2>
+                {% if can_manage %}
+                    <span class="badge text-bg-light">Загрузка доступна</span>
+                {% endif %}
+            </div>
+            {% if event.files.all %}
+                <div class="list-group mb-3">
+                    {% for file in event.files.all %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center gap-3">
+                            <div>
+                                <a href="{{ file.file.url }}"><i class="bi bi-paperclip"></i> {{ file.file_name }}</a>
+                                <div class="small text-muted">{{ file.get_file_type_display }} · {{ file.uploaded_at|date:'d.m.Y H:i' }}</div>
+                            </div>
+                            {% if can_manage %}
+                                <form method="post" action="{% url 'events:delete_event_file' file.pk %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash"></i></button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">Файлы пока не прикреплены.</p>
+            {% endif %}
+
+            {% if can_manage %}
+                <form class="row g-3" method="post" enctype="multipart/form-data" action="{% url 'events:upload_event_file' event.pk %}">
+                    {% csrf_token %}
+                    <div class="col-md-4">{{ file_form.file_type.label_tag }}{{ file_form.file_type }}</div>
+                    <div class="col-md-6">{{ file_form.file.label_tag }}{{ file_form.file }}</div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-upload"></i> Загрузить</button>
+                    </div>
+                </form>
+            {% endif %}
+        </section>
+
+        <section class="content-panel">
+            <h2 class="h5 mb-3">Комментарии и отзывы</h2>
+            {% for comment in comments %}
+                <div class="comment-item">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong>{{ comment.user.full_name }}</strong>
+                        <span class="badge text-bg-secondary">{{ comment.get_comment_type_display }}</span>
+                    </div>
+                    <p class="mb-1">{{ comment.content }}</p>
+                    <span class="small text-muted">{{ comment.created_at|date:'d.m.Y H:i' }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted">Комментариев пока нет.</p>
+            {% endfor %}
+            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'events:add_comment' event.pk %}" class="mt-3">
+                    {% csrf_token %}
+                    {{ comment_form.content }}
+                    <button class="btn btn-outline-primary mt-2" type="submit"><i class="bi bi-chat-left-text"></i> Добавить</button>
+                </form>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="col-lg-4">
+        <div class="action-panel">
+            <h2 class="h5">Участие</h2>
+            <p class="text-muted small">Свободных мест: {{ event.free_places }}</p>
+            {% if user.is_authenticated %}
+                {% if registration and registration.status == 'registered' %}
+                    <div class="alert alert-success">Вы зарегистрированы.</div>
+                    <form method="post" action="{% url 'events:cancel_registration' event.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-outline-danger w-100" type="submit"><i class="bi bi-x-circle"></i> Отменить регистрацию</button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'events:register_for_event' event.pk %}">
+                        {% csrf_token %}
+                        <button class="btn btn-primary w-100" type="submit" {% if not event.is_registration_available %}disabled{% endif %}>
+                            <i class="bi bi-check2-circle"></i> Зарегистрироваться
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <a class="btn btn-primary w-100" href="{% url 'accounts:login' %}">Войти для регистрации</a>
+            {% endif %}
+
+            {% if can_manage %}
+                <hr>
+                <div class="d-grid gap-2">
+                    <a class="btn btn-outline-primary" href="{% url 'events:event_edit' event.pk %}"><i class="bi bi-pencil"></i> Редактировать</a>
+                    <a class="btn btn-outline-secondary" href="{% url 'events:participants' event.pk %}"><i class="bi bi-people"></i> Участники</a>
+                    <a class="btn btn-outline-danger" href="{% url 'events:event_delete' event.pk %}"><i class="bi bi-trash"></i> Удалить</a>
+                </div>
+            {% endif %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Мои регистрации{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Мои регистрации</h1>
+<div class="content-panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+            <tr>
+                <th>Мероприятие</th>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for registration in registrations %}
+                <tr>
+                    <td>{{ registration.event.title }}</td>
+                    <td>{{ registration.event.start_datetime|date:'d.m.Y H:i' }}</td>
+                    <td><span class="badge {% if registration.status == 'registered' %}text-bg-success{% else %}text-bg-secondary{% endif %}">{{ registration.get_status_display }}</span></td>
+                    <td class="text-end"><a class="btn btn-outline-primary btn-sm" href="{% url 'events:event_detail' registration.event.pk %}">Открыть</a></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4" class="text-muted">Вы пока не регистрировались на мероприятия.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

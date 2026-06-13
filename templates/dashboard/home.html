@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Панель администратора{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h1 class="h3 mb-1">Панель администратора</h1>
+        <p class="text-muted mb-0">Пользователи, справочники, модерация и статистика.</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" href="{% url 'dashboard:user_list' %}"><i class="bi bi-people"></i> Пользователи</a>
+        <a class="btn btn-primary" href="{% url 'events:event_create' %}"><i class="bi bi-plus-lg"></i> Мероприятие</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3"><div class="stat-card"><span>Пользователи</span><strong>{{ users_count }}</strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="stat-card"><span>Мероприятия</span><strong>{{ events_count }}</strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="stat-card"><span>Регистрации</span><strong>{{ registrations_count }}</strong></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="stat-card"><span>Категории</span><strong>{{ categories_count }}</strong></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="content-panel">
+            <h2 class="h5 mb-3">Популярные мероприятия</h2>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Мероприятие</th><th>Статус</th><th>Регистрации</th></tr></thead>
+                    <tbody>
+                    {% for event in popular_events %}
+                        <tr>
+                            <td><a href="{% url 'events:event_detail' event.pk %}">{{ event.title }}</a></td>
+                            <td><span class="badge status-{{ event.status }}">{{ event.get_status_display }}</span></td>
+                            <td>{{ event.reg_count }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-muted">Данных пока нет.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="content-panel mb-4">
+            <h2 class="h5 mb-3">Справочники</h2>
+            <div class="d-grid gap-2">
+                <a class="btn btn-outline-secondary text-start" href="{% url 'dashboard:reference_list' 'categories' %}"><i class="bi bi-bookmark"></i> Категории</a>
+                <a class="btn btn-outline-secondary text-start" href="{% url 'dashboard:reference_list' 'tags' %}"><i class="bi bi-tags"></i> Теги</a>
+                <a class="btn btn-outline-secondary text-start" href="{% url 'dashboard:reference_list' 'organizations' %}"><i class="bi bi-building"></i> Организации</a>
+                <a class="btn btn-outline-secondary text-start" href="{% url 'dashboard:reference_list' 'locations' %}"><i class="bi bi-geo-alt"></i> Места проведения</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-6">
+        <div class="content-panel">
+            <h2 class="h5 mb-3">Мероприятия по категориям</h2>
+            {% for category in category_stats %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ category.name }}</span>
+                    <span class="badge text-bg-light">{{ category.event_count }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">Категории не заполнены.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="content-panel">
+            <h2 class="h5 mb-3">Загрузка мест проведения</h2>
+            {% for location in location_stats %}
+                <div class="d-flex justify-content-between border-bottom py-2">
+                    <span>{{ location }}</span>
+                    <span class="badge text-bg-light">{{ location.event_count }}</span>
+                </div>
+            {% empty %}
+                <p class="text-muted mb-0">Места проведения не заполнены.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
